@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wb_db
+      POSTGRES_USER: wb_user
+      POSTGRES_PASSWORD: wb_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - wb-pg-data:/var/lib/postgresql/data
+  nats:
+    image: nats-streaming
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+    command: "--cluster_name NATS --cluster nats://0.0.0.0:6222 --http_port 8222 --cluster_id my-cluster"
+    networks: [ "nats" ]
+
+
+  wb-test-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  wb-pg-data:
+
+networks:
+  nats:
+    external: true
